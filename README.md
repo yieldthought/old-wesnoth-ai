@@ -6,9 +6,13 @@ I don't recall exactly when or why I stopped playing with this, so it might not 
 Last tested with Wesnoth 1.11.15
 
 I just about recall that to install this you need to put yt.lua here:
+
     ~/.local/share/wesnoth/1.11/data/add-ons/AI-demos/lua/
+    
 and yt\_simple.cfg here:
+
     ~/.local/share/wesnoth/1.11/data/add-ons/AI-demos/ais/
+
 
 The included wesrun script will run one fight between this AI and the default and print some stats to stdout.
 
