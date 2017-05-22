@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# test run
+wesnoth --nosound --nomusic --multiplayer --controller 1:ai --controller 2:ai --log-debug ai/testing --ai-config 1:~add-ons/AI-demos/ais/yt_simple.cfg --nogui --side 1:Undead --side 2:Loyalists 2>&1 | tee /tmp/wesnoth.log | ./wesnoth2log || (cat /tmp/wesnoth.log && exit 1)
+

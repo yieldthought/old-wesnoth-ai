@@ -1,0 +1,95 @@
+#!/usr/bin/python
+#encoding: utf-8
+
+import fileinput
+import re
+from subprocess import check_output
+
+
+def main():
+    text = ''.join(line for line in fileinput.input())
+    header = read_header(text)
+    turns = read_turns(text)
+    outcome = read_outcome(text)
+    write_relative_log(header, turns, outcome)
+
+
+def read_header(text):
+    players = dict(re.findall(r'AI_IDENTIFIER(\d): (\w+)', text))
+    return {'players': players}
+
+
+def read_turns(text):
+    split = re.split(r'\nTurn \d+:\n', text)[1:]
+    result = [ read_turn(turn_text) for turn_text in split ]
+    return result
+
+
+def read_turn(turn_text):
+    units      = dict(re.findall(r'TURN_START_UNITS(\d): (\d+)\n', turn_text))
+    units_cost = dict(re.findall(r'TURN_START_UNITS_COST(\d): (\d+)\n', turn_text))
+    gold       = dict(re.findall(r'TURN_START_GOLD(\d): (\d+)\n', turn_text))
+    villages   = dict(re.findall(r'TURN_START_VILLAGES(\d): (\d+)\n', turn_text))
+    income     = dict(re.findall(r'TURN_START_INCOME(\d): (\d+)\n', turn_text))
+    return { 'units': units, 'units_cost': units_cost, 'gold': gold, 'villages': villages, 'income': income }
+
+
+def read_outcome(text):
+    outcome = re.findall(r'WINNER: (\w+)\n', text)[0]
+    return outcome
+
+
+def write_log(header, turns, outcome):
+    print 'player 1: %s\nplayer 2: %s\nwinner  : %s' % (header['players']['1'], header['players']['2'], outcome)
+    print 'turn\tunits_1\tunits_2\tcost_1\tcost_2\tgold_1\tgold_2\tvills_1\tvills_2\tinc_1\tinc_2'
+    for i, t in enumerate(turns):
+        print '%d\t' % (i + 1),
+        print '%s\t' % t['units']['1'],
+        print '%s\t' % t['units']['2'],
+        print '%s\t' % t['units_cost']['1'],
+        print '%s\t' % t['units_cost']['2'],
+        print '%s\t' % t['gold']['1'],
+        print '%s\t' % t['gold']['2'],
+        print '%s\t' % t['villages']['1'],
+        print '%s\t' % t['villages']['2'],
+        print '%s\t' % t['income']['1'],
+        print '%s'   % t['income']['2']
+
+
+def write_relative_log(header, turns, outcome):
+    def relative(column):
+        if not '1' in column: column['1'] = 0
+        if not '2' in column: column['2'] = 0
+        return int(99 * float(column['1']) / (float(column['1']) + float(column['2'])) if (float(column['1']) + float(column['2'])) else 50)
+
+    units = ''
+    cost  = ''
+    gold  = ''
+    vills = ''
+    inc   = ''
+    for i, t in enumerate(turns):
+        units += ' %2d' % relative(t['units'])
+        cost  += ' %2d' % relative(t['units_cost'])
+        gold  += ' %2d' % relative(t['gold'])
+        vills += ' %2d' % relative(t['villages'])
+        inc   += ' %2d' % relative(t['income'])
+
+    print (u'%s vs %s  |  winner: %s' % (header['players']['1'], header['players']['2'], outcome)).encode('utf-8')
+    print (u'units: %s%s' % (sparkline(units), units)).encode('utf-8')
+    print (u'cost : %s%s' % (sparkline(cost ), cost )).encode('utf-8')
+    print (u'gold : %s%s' % (sparkline(gold ), gold )).encode('utf-8')
+    print (u'vills: %s%s' % (sparkline(vills), vills)).encode('utf-8')
+    print (u'inc  : %s%s' % (sparkline(inc  ), inc  )).encode('utf-8')
+
+
+def sparkline(integers):
+    return ''.join(spark(int(num)) for num in integers.split())
+
+
+def spark(num):
+    chars = u'▁▂▃▄▅▆▇'
+    i = num * len(chars) / 100
+    return chars[i]
+
+if __name__ == '__main__':
+    main()
